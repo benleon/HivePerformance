@@ -1,4 +1,4 @@
-!!! Rough and Dirty Performance Test suite for Hive/Phoenix !!! 
+!!! Rough Performance Test suite for Hive/Phoenix !!! 
 
 
 README for test suite
