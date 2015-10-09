@@ -25,6 +25,10 @@ public class HiveTestQuery {
 	public Date queryEnded = new Date();
 	public Date resultsFetched = new Date();
 	
+	
+	// query identifier from test data file
+	public ArrayList<String> queryIdentification = null;
+	
 	public int threadId = 0;
 	
 	public boolean queryFailed = false;
@@ -137,7 +141,7 @@ public class HiveTestQuery {
 	{
 		DecimalFormat dec = new DecimalFormat("#.##");
 		//dec.setMaximumFractionDigits(2);
-		return 
+		String ret =  
 				this.fileLocation + ","  +
 				dec.format(this.totalExecTime()) + "," +
 				dec.format(this.execSeconds()) + "," +
@@ -149,8 +153,19 @@ public class HiveTestQuery {
 				this.queryFailed + "," + 
 				this.queryMinDate + "," +
 				this.queryMaxDate + "," +
-				this.threadId + "\n";
+				this.threadId ;
 				
+		// optionally add the identification strings,"
+		
+		if (this.queryIdentification != null)
+		{
+			for (String s : queryIdentification)
+			{
+				ret = ret + "," + s; 
+			}
+		}
+		
+		return ret + "\n";
 	}
 	
 	

@@ -13,8 +13,10 @@ import java.sql.ResultSetMetaData;
 import java.sql.SQLException;
 import java.text.DecimalFormat;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Date;
 import java.util.HashMap;
+import java.util.List;
 import java.util.Properties;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
@@ -26,6 +28,8 @@ public class HiveHelper {
 	public boolean verbose = false;
 	
 	public boolean writeResultSetToFile = false;
+	
+	public boolean writeActualSQL = false;
 	
 	public FileWriter outputWriter = null;
 	
@@ -40,6 +44,7 @@ public class HiveHelper {
 		if (propertyTrue("verbose")) this.verbose = true;
 		if (propertyTrue("writeResultSetToFile")) this.writeResultSetToFile = true;
 		if (propertyTrue("randomize")) this.randomize = true;
+		if (propertyTrue("writeSQLToFile")) this.writeActualSQL = true;
 		this.resourceManager = prop.getProperty("resourceManager");
 		this.refreshConnection = this.getNumberFromProperty("refreshConnection", -1);
 	}
@@ -54,11 +59,28 @@ public class HiveHelper {
 		if (writeResultSetToFile)
 		{
 			try {
-				outFile = new File(HiveHelper.replaceEnding(inFile, ".result"));
+				String ending = "";
+				if (query.queryIdentification != null)
+				{
+					for ( String s : query.queryIdentification)
+					{
+						ending = ending + "-" + s ;
+					}
+					
+				}
+				ending = ending + ".result";
+				
+				outFile = new File(HiveHelper.replaceEnding(inFile, ending));
 				outFile.delete();
 				outFile.createNewFile();
 
 				outputWriter = new FileWriter (outFile);
+				if (this.writeActualSQL)
+				{
+					outputWriter.write("Query:\n" );
+					outputWriter.write(query.queryString + "\n");
+					outputWriter.write("\nResults:\n");
+				}
 			} catch (Exception e) {
 				System.out.println("Couldn't create output File: " + outFile);
 				e.printStackTrace();
@@ -210,6 +232,15 @@ public class HiveHelper {
 		return file.substring(0, indexLastDot) + newEnding;
 	}
 	
+	
+	public List<String> getListProperty(String propName)
+	{
+		//ArrayList<String> list = new ArrayList<String>();
+		String propString = this.prop.getProperty(propName);
+		if (propString == null || propString.equals("")) return null;
+		String[] parts = propString.split(",");
+		return Arrays.asList(parts);
+	}
 	
 	public HashMap<String,String> getReplacements()
 	{

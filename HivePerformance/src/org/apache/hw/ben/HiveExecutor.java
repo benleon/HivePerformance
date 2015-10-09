@@ -29,6 +29,7 @@ public class HiveExecutor {
 	HiveHelper helper = null;
 	ArrayList<HiveExecutionThread> threads = new ArrayList<HiveExecutionThread>(); 
 	
+	
 	public HiveExecutor( Properties props)
 	{
 		this.hiveTestProperties = props;
@@ -200,7 +201,19 @@ public class HiveExecutor {
 			queryTime.createNewFile();
 
 			FileWriter outputWriter = new FileWriter (queryTime);
-			outputWriter.write("Query, TotalTime, ExecTime, FetchTime, RowsReturned, ImpalaTime, ImpalaRows, RowsDifferent, Problem, MinDate, MaxDate, Thread\n");
+			outputWriter.write("Query, TotalTime, ExecTime, FetchTime, RowsReturned, ImpalaTime, ImpalaRows, RowsDifferent, Problem, MinDate, MaxDate, Thread");
+			if (set.tdg != null)
+			{
+				if (set.tdg.identificationFields != null)
+				{
+					for (String s : set.tdg.identificationFields)
+					{
+						outputWriter.write(", " + s);
+					}
+				}
+			}
+			
+			outputWriter.write("\n");
 			for (int i = 0; i < set.allQueries.size(); i ++ )
 			{
 				outputWriter.write(set.allQueries.get(i).getSummaryCSV());

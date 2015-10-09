@@ -48,7 +48,6 @@ queriesPerFolder : Property for the old Yahoo Japan test suite, takes only x que
 	sorting query names by queryname.x.sql ( numerical sorting ) 
 multiplyQueries : Increasing number of queries by running the set multiple times. 
 randomize : randomizes order to rule out any dependencies between queries
-
 	
 B) Query Execution
 
@@ -73,6 +72,16 @@ value12|value22...
 If test data file is encountered tool will try to replace the following strings in each query and replace them
 with the values from the testdatafile. First query will have values from row1, and so on.
 Wildcard in query needs to be of format ${Value:column1Name} and will be replaced for the first query with value11 and for the second query with value12
+
+parameter identFields: 
+
+query results can have added fields from the testdata file. These fields will be added to the query result filename and the query result csv file entries. The values will be taken from testDataFile. If this is present SQL output files will also be generated. 
+
+parameter writeActualSQL:
+
+if this is true generated sql will be added to result file. Note this will not work together with
+comparing Impala results.
+
 
 C) Writing results
 

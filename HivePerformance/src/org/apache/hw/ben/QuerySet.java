@@ -20,6 +20,8 @@ public class QuerySet {
 	
 	public HiveHelper helper = null;
 	
+	public TestDataGenerator tdg = null;
+	
 	public QuerySet(HiveHelper helper) {
 		this.folder = helper.testFolder();
 		this.helper = helper;
@@ -87,10 +89,11 @@ public class QuerySet {
 		{
 			// if a testDataFile has been specified we will use it to replace 
 			// values in the queries ( like IOID numbers ) 
-			TestDataGenerator tdg = new TestDataGenerator(HiveTestMain.hiveTestProperties.getProperty("testDataFile"));
+			tdg = new TestDataGenerator(this.helper);
 			for (int i = 0; i < this.allQueries.size();  i++ )
 			{
 				allQueries.get(i).queryString = tdg.replaceQuery(allQueries.get(i).queryString);
+				
 			}
 		}
 		

@@ -6,8 +6,8 @@ import java.io.IOException;
 import java.io.InputStreamReader;
 import java.util.ArrayList;
 import java.util.Arrays;
-import java.util.Collections;
 import java.util.HashMap;
+import java.util.List;
 
 /**
  * This class takes a query with wildcards and replaces them with valid values
@@ -28,11 +28,17 @@ public class TestDataGenerator {
 	
 	String[] columnNames = null;
 	
-	public TestDataGenerator ( String inputFile )
+	HiveHelper helper = null;
+	
+	public List<String> identificationFields = null;
+	
+	public TestDataGenerator ( HiveHelper helper )
 	{
-		this.testFile = inputFile;
-		if ( testFile != null ) this.readFile(inputFile);
+		this.helper = helper;
+		this.testFile = helper.prop.getProperty("testDataFile");
 		
+		if ( testFile != null ) this.readFile(testFile);
+		this.identificationFields = helper.getListProperty("identFields");
 		
 	}
 	
@@ -121,6 +127,34 @@ public class TestDataGenerator {
 				e.printStackTrace();
 			}
 		}
+	}
+	
+	
+	/**
+	 * This method updates a query based on the test data generator. Updating query string and
+	 * identification fields
+	 */
+	public void updateQuery(HiveTestQuery query)
+	{
+		query.queryString = this.replaceQuery(query.queryString);
+		if (this.identificationFields != null)
+		{
+			ArrayList<String> identValues = new ArrayList<String>();
+			for (String s : this.identificationFields)
+			{
+				String identField = this.getCurrentValue(s);
+				if (identField != null)
+				{
+					identValues.add(identField);
+				}
+				else
+				{
+					identValues.add("");
+				}
+				
+			}
+		}
+		
 	}
 	
 	/** This method replaces all wildcards in the query with actual values
