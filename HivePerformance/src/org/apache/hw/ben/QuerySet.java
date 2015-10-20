@@ -63,7 +63,6 @@ public class QuerySet {
 			}
 		}
 		
-		if (helper.randomize) Collections.shuffle(allQueries);
 
 		
 		
@@ -82,9 +81,9 @@ public class QuerySet {
 				}
 			}
 		}
-		
+
 		replaceValues();
-		
+
 		if (HiveTestMain.hiveTestProperties.getProperty("testDataFile") != null)
 		{
 			// if a testDataFile has been specified we will use it to replace 
@@ -92,11 +91,13 @@ public class QuerySet {
 			tdg = new TestDataGenerator(this.helper);
 			for (int i = 0; i < this.allQueries.size();  i++ )
 			{
-				allQueries.get(i).queryString = tdg.replaceQuery(allQueries.get(i).queryString);
+				tdg.updateQuery(allQueries.get(i));
+				//allQueries.get(i).queryString = tdg.replaceQuery(allQueries.get(i).queryString);
 				
 			}
 		}
-		
+		if (helper.randomize) Collections.shuffle(allQueries);
+ 
 		
 		if ( helper.verbose) printQueries();
 		

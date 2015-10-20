@@ -77,10 +77,16 @@ parameter identFields:
 
 query results can have added fields from the testdata file. These fields will be added to the query result filename and the query result csv file entries. The values will be taken from testDataFile. If this is present SQL output files will also be generated. 
 
-parameter writeActualSQL:
+parameter writeSQLToFile:
 
 if this is true generated sql will be added to result file. Note this will not work together with
 comparing Impala results.
+
+parameter reuseTests: [ int ] 
+
+If this is true tests from the test file will be reused x times. For example if you have
+three tests in the test suite you can make sure that all of them are run with all random values
+
 
 
 C) Writing results
@@ -94,10 +100,12 @@ checkSpeed: Writes a summary line every x seconds to the sysout
 readImpalaValues : expects Impala output files with the same name of the query file and ending .out 
 outputSQLFiles: Writes a single Query file, one thread at a time for execution with beeline, hive cli, ...
 diffImpala: runs a comparison of hive and impala results at the end, writes a file resultsDiff into the test folder
+aggregateSummaryOn : Value to aggregate the results on. For example if you have three queries you can get average performance for each query by using the queryName field. Also fields from queryIdentification can be used.
+skipFirstForSummary: Allows  to ignore the first x queries to compute the average performance ( skip warmup) 
 
 D) Created Output
 
-Writes a status line every "checksped" seconds, Writes a summary line at the end. 
+Writes a status line every "checkspeed" seconds, Writes a summary line at the end. 
 
 Also writes three files into the rashtest folder:
 - query... : CSV of all queries, execution time, execution errors, rows returned, rows different than Impala, ...

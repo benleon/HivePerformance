@@ -2,17 +2,16 @@ package org.apache.hw.ben;
 
 import java.io.File;
 import java.io.FileWriter;
-import java.io.IOException;
 import java.text.DecimalFormat;
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.Date;
+import java.util.HashMap;
+import java.util.List;
 import java.util.Properties;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.concurrent.TimeUnit;
-
-import org.apache.hadoop.hive.ql.parse.HiveParser_IdentifiersParser.sysFuncNames_return;
-import org.apache.hadoop.yarn.exceptions.YarnException;
 
 
 /**
@@ -22,7 +21,20 @@ import org.apache.hadoop.yarn.exceptions.YarnException;
  */
 public class HiveExecutor {
 	
-	
+	public class StatsNumbers {
+		/**
+		 * 
+		 */
+		private static final long serialVersionUID = 1L;
+		
+		//String characteristic = "ALL";
+		int numberQueries = 0;
+		double minTime = Double.MAX_VALUE;
+		double maxTime = 0.0;
+		double avgTime = 0.0;
+		double totalSingleTime = 0.0;
+		
+	}
 
 	
 	Properties hiveTestProperties = null;
@@ -99,6 +111,91 @@ public class HiveExecutor {
 		
 	}
 	
+	
+	public void printPerformanceByCharacteristics(QuerySet set, double totalTime, String characteristic1, String characteristic2)
+	{
+		int skip = helper.getNumberFromProperty("skipFirstForSummary", 0);
+		
+		int execQueries = set.allQueries.size() ;
+		int eligibleQueries = execQueries - skip;
+		
+		HashMap<String, StatsNumbers> charValues = new HashMap<String,StatsNumbers>();
+		if (characteristic1 == null)
+		{
+			charValues.put("ALL", new StatsNumbers());
+			StatsNumbers s = charValues.get("ALL");
+
+			for (int i = skip; i < set.allQueries.size(); i++)
+			{
+				HiveTestQuery q = set.allQueries.get(i);
+				s.minTime  = Math.min(s.minTime, q.totalExecTime());
+				s.maxTime  = Math.max(s.maxTime, q.totalExecTime());
+				s.totalSingleTime += q.totalExecTime();
+				s.numberQueries++;
+			}
+			
+		}
+		else
+		{
+			for (int i = skip; i < set.allQueries.size(); i++)
+			{
+				HiveTestQuery q = set.allQueries.get(i);
+				String cV1 = q.getCharacteristic(characteristic1);
+				String cV2 = "";
+				if (characteristic2 != null)
+				{
+					
+					cV2 = q.getCharacteristic(characteristic2);
+				}
+				String cV = cV1 + cV2;
+				if (!charValues.containsKey(cV))
+				{
+					charValues.put(cV, new StatsNumbers());
+					
+				
+				}
+				StatsNumbers s = charValues.get(cV);
+				if (!q.queryFailed )
+				{
+					s.minTime  = Math.min(s.minTime, q.totalExecTime());
+					s.maxTime  = Math.max(s.maxTime, q.totalExecTime());
+					s.totalSingleTime += q.totalExecTime();
+					s.numberQueries++;
+				}
+			}
+		}
+		System.out.println("Performance for Characteristic: " + characteristic1 + " Optional characteristic  " + characteristic2 + " skipping " + skip + " records.");
+		DecimalFormat dec = new DecimalFormat("#.##");
+
+		ArrayList<String> keys = new ArrayList<String>(charValues.keySet());
+		 Collections.sort(keys);
+		 System.out.println("q/s\tmin\tmax\tavg\tnum\tgroup");
+		for (String c : keys)
+		{
+			
+			StatsNumbers s = charValues.get(c);
+//			System.out.println("Value: " + c
+//					+ " Throughput=" + dec.format(this.threads.size() /  ( s.totalSingleTime /s.numberQueries))
+//			+ ", MinTimeNonFailed=" + dec.format(s.minTime)
+//			+ ", MaxTimeNonFailed=" + dec.format(s.maxTime)
+//			+ ", AverageTime=" + dec.format(( s.totalSingleTime /s.numberQueries))
+//			+ ", Number Queries=" + s.numberQueries);
+//			
+			
+			System.out.println(dec.format(this.threads.size() /  ( s.totalSingleTime /s.numberQueries))
+					+ "\t" + dec.format(s.minTime)
+                    + "\t" + dec.format(s.maxTime)
+                    + "\t" + dec.format(( s.totalSingleTime /s.numberQueries))
+                    + "\t" + s.numberQueries
+                    + "\t" + c);
+
+		}
+		System.out.println("");
+
+	}
+	
+	
+	
 	/*
 	 * will write a couple of total summary lines to sysout
 	 */
@@ -110,7 +207,7 @@ public class HiveExecutor {
 		int longQueries =0;
 		int cutoff = helper.getNumberFromProperty("cutoff", 60);
 		double queriesPerSec = 0.0;
-		double minTime = 0.0;
+		double minTime = Double.MAX_VALUE;
 		double maxTime = 0.0;
 		double avgTime = 0.0;
 		double totalSingleTime = 0.0;
@@ -131,12 +228,34 @@ public class HiveExecutor {
 							+ ", Executed Queries=" + execQueries 
 							+ ", Failed Queries=" + failedQueries 
 							+ ", ResultsDifferentQueries=" + diffQueries
-							+ ", QueriesOverCutoff=" + longQueries + "["+ cutoff + " sec]");
+							+ ", QueriesOverCutoff=" + longQueries + "["+ cutoff + " sec]"
+							+ ", QueriesPerSec=" + dec.format(queriesPerSec));
+		
+		
 		
 		System.out.println("Performance Summary: QueriesPerSec=" + dec.format(queriesPerSec)
 							+ ", MinTimeNonFailed=" + dec.format(minTime)
 							+ ", MaxTimeNonFailed=" + dec.format(maxTime)
 							+ ", AverageTime=" + dec.format(avgTime));
+		
+		
+		this.printPerformanceByCharacteristics(set, totalTime, null, null);
+		
+		List<String> aggChars = helper.getListProperty("aggregateSummaryOn");
+		for (String a : aggChars )
+		{
+			if (a.contains("@"))
+			{
+				int pos = a.indexOf("@");
+				String c1 = a.substring(0,pos);
+				String c2 = a.substring(++pos);
+				this.printPerformanceByCharacteristics(set, totalTime, c1, c2);
+			}
+			else
+			{
+				this.printPerformanceByCharacteristics(set, totalTime, a, null);
+			}
+		}
 		
 	}
 	

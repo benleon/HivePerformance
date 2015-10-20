@@ -11,6 +11,8 @@ import java.text.DecimalFormat;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.Date;
+import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 import java.util.StringTokenizer;
 import java.util.regex.Matcher;
@@ -27,7 +29,7 @@ public class HiveTestQuery {
 	
 	
 	// query identifier from test data file
-	public ArrayList<String> queryIdentification = null;
+	public List<String> queryIdentification = null;
 	
 	public int threadId = 0;
 	
@@ -44,6 +46,11 @@ public class HiveTestQuery {
 	String queryMinDate = "";
 	String queryMaxDate = "";
 	
+	public Map<String, String> characteristics = new HashMap<String,String>();
+	
+	
+	
+	
 	
 	public HiveTestQuery(String fileLocation) {
 		this.fileLocation = fileLocation;
@@ -54,6 +61,98 @@ public class HiveTestQuery {
 		}
 		extractTimeRangeFromQuery();
 	    readImpalaValues();
+	}
+	
+	public void setRowsReturned(int num)
+	{
+		this.rowsReturned = num;
+		this.characteristics.put("totalrows", new Integer(num).toString());
+	}
+	
+	public String getStrippedName()
+	{
+		int pos = this.fileLocation.lastIndexOf("/");
+		String ret = this.fileLocation;
+		if ( pos != -1)
+		{
+			ret = ret.substring(++pos);
+		}
+		if (ret.endsWith(".sql"))
+		{
+			ret = ret.substring(0, ret.length() -4);
+		}
+		return ret;
+	}
+	
+	/**
+	 * sets the parameters from the test file for query indentification
+	 * @param keys
+	 * @param values
+	 */
+	public void setQueryIdent(List<String> keys, List<String> values)
+	{
+		this.queryIdentification = values;
+		this.characteristics.put("queryName", getStrippedName());
+        this.characteristics.put("totalrows", new Integer(this.rowsReturned).toString());
+		if (keys == null || values == null) return;
+		for (int i = 0; i < keys.size(); i++)
+		{
+			this.characteristics.put(keys.get(i), values.get(i));
+		}
+	}
+	
+	
+	public String getCharacteristic(String name)
+	{
+		if (name.startsWith("bin:"))
+		{
+			//String buckstring = name.substring(4);
+			int firstparenthesis = name.indexOf("[");
+			String field = name.substring(4, firstparenthesis);
+			//System.out.println(field);
+			String bucketString = name.substring(++firstparenthesis, name.length() -1);
+			String[] bucketStrings = bucketString.split(":");
+			//System.out.println(bucketString);
+
+			ArrayList<Integer> bucks = new ArrayList<Integer>();
+			for (String s : bucketStrings)
+			{
+				bucks.add(new Integer(s));
+			}
+			if (characteristics.containsKey(field))
+			{
+				String value = characteristics.get(field);
+				Double d = new Double(value);
+				for ( int i = 0; i < bucks.size(); i++ )
+				{
+					Integer bucketMax = bucks.get(i);
+					if ( bucketMax > d )
+					{
+						String min = "";
+						String max = bucketMax.toString();
+						if (i > 0 ) min = bucks.get(i - 1).toString();
+						
+						//System.out.println( field + ":" + min + "_" + max);
+						return field + ":" + min + "_" + max;
+					}
+				}
+				String max = "";
+				String min = bucks.get(bucks.size() - 1 ).toString();
+				return field + ":" + min + "_" + max;
+
+				
+			}
+			return "None";
+			
+		}
+		if (this.characteristics.containsKey(name))
+		{
+			return characteristics.get(name);
+		}
+		else
+		{
+			return "None";
+		}
 	}
 	
 	

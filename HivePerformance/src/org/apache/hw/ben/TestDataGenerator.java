@@ -32,10 +32,16 @@ public class TestDataGenerator {
 	
 	public List<String> identificationFields = null;
 	
+	// to reuse a single entry for multiple queries, for example if every single entry should be used
+	// for each query type.
+	public int reuse = 1; 
+	private int curReuse = 0; 
+	
 	public TestDataGenerator ( HiveHelper helper )
 	{
 		this.helper = helper;
 		this.testFile = helper.prop.getProperty("testDataFile");
+		this.reuse =  helper.getNumberFromProperty("reuseTests", 1);
 		
 		if ( testFile != null ) this.readFile(testFile);
 		this.identificationFields = helper.getListProperty("identFields");
@@ -50,6 +56,15 @@ public class TestDataGenerator {
 	public void next()
 	{
 		if ((replacementValues == null) || ( replacementValues.size() == 0)) return;
+		curReuse++;
+		if (curReuse < reuse) 
+		{
+			return;
+		}
+		else
+		{
+			curReuse = 0;
+		}
 		currentItem ++;
 		if (currentItem >= replacementValues.size()) currentItem = 0;
 	}
@@ -153,6 +168,7 @@ public class TestDataGenerator {
 				}
 				
 			}
+			query.setQueryIdent(identificationFields, identValues);
 		}
 		
 	}

@@ -29,7 +29,7 @@ public class HiveHelper {
 	
 	public boolean writeResultSetToFile = false;
 	
-	public boolean writeActualSQL = false;
+	public boolean writeSQLToFile = false;
 	
 	public FileWriter outputWriter = null;
 	
@@ -44,7 +44,7 @@ public class HiveHelper {
 		if (propertyTrue("verbose")) this.verbose = true;
 		if (propertyTrue("writeResultSetToFile")) this.writeResultSetToFile = true;
 		if (propertyTrue("randomize")) this.randomize = true;
-		if (propertyTrue("writeSQLToFile")) this.writeActualSQL = true;
+		if (propertyTrue("writeSQLToFile")) this.writeSQLToFile = true;
 		this.resourceManager = prop.getProperty("resourceManager");
 		this.refreshConnection = this.getNumberFromProperty("refreshConnection", -1);
 	}
@@ -75,7 +75,7 @@ public class HiveHelper {
 				outFile.createNewFile();
 
 				outputWriter = new FileWriter (outFile);
-				if (this.writeActualSQL)
+				if (this.writeSQLToFile)
 				{
 					outputWriter.write("Query:\n" );
 					outputWriter.write(query.queryString + "\n");
@@ -111,7 +111,8 @@ public class HiveHelper {
 				}
 				
 			}
-			query.rowsReturned = numRows;
+			query.setRowsReturned(numRows);
+			//query.rowsReturned = numRows;
 			Date after = new Date();
 			query.resultsFetched = after;
 			DecimalFormat dec = new DecimalFormat("#.##");
