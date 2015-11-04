@@ -151,7 +151,7 @@ public class TestDataGenerator {
 	 */
 	public void updateQuery(HiveTestQuery query)
 	{
-		query.queryString = this.replaceQuery(query.queryString);
+		
 		if (this.identificationFields != null)
 		{
 			ArrayList<String> identValues = new ArrayList<String>();
@@ -170,6 +170,7 @@ public class TestDataGenerator {
 			}
 			query.setQueryIdent(identificationFields, identValues);
 		}
+		query.queryString = this.replaceQuery(query.queryString);
 		
 	}
 	
